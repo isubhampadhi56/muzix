@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/model/index.ts","./src/model/entities/playlist.entity.ts","./src/model/entities/video.entity.ts","./src/module/playlist.module.ts","./src/module/video.module.ts","./src/route/playlist.router.ts","./src/route/video.router.ts","./src/route/youtube.router.ts","./src/service/youtube.service.ts"],"version":"5.8.3"}

@@ -1,4 +1,4 @@
-import { playlistRepo } from "../model"
+import { playlistRepo, videoRepo } from "../model"
 import { z } from "zod";
 const createPlaylistSchema = z.object({
     name: z.string(),
@@ -33,9 +33,20 @@ const deletePlayList = async (playlistId:string) =>{
 const updatePlayList = (reqBody:any)=>{
     
 }
+const getAllVideosInPlayList = async (playlistId:string) =>{
+    const videos = await videoRepo.find({
+        where:{
+            playlist:{
+                id:playlistId
+            }
+        }
+    })
+    return videos;
+}
 export{
     getAllPlaylist,
     getPlaylistById,
     createPlaylist,
-    deletePlayList
+    deletePlayList,
+    getAllVideosInPlayList
 }
