@@ -1,6 +1,7 @@
 import { videoRepo } from "../model"
 import { z } from "zod";
 import YoutubeService from "../service/youtube.service";
+import { v4 as uuidv4 } from "uuid";
 const getVideoSchema = z.object({
     playlistId: z.string(),
     videoId: z.string()
@@ -48,10 +49,9 @@ const getVideoById = async(videoId:string) => {
 }
 const addVideo = async(reqBody:any) =>{
     const reqData = await addVideoSchema.parseAsync(reqBody);
-    const videoName = "";
     const video = await videoRepo.create({
+        id: uuidv4(),
         url: reqData.url,
-        name: videoName,
         playlist:{
             id:reqData.playlistId     
         }

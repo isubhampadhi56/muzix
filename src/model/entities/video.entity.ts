@@ -6,7 +6,7 @@ export class Video {
   @PrimaryGeneratedColumn("uuid")
   id!: string
 
-  @Column({type: "varchar",nullable:false})
+  @Column({type: "varchar",nullable:true})
   name!: string
 
   @Column({type: "varchar",nullable:false})
@@ -20,9 +20,12 @@ export class Video {
 
   @UpdateDateColumn({ name: "updatedAt" })
   updatedAt!: Date
+
+  @Column({type: "varchar", nullable: false})
+  playlistId!: string
   
   @ManyToOne(() => PlayList, (playlist) => playlist.videos)
-  @JoinColumn({name: "id"})
+  @JoinColumn({name: "playlistId"})
   playlist?: Relation<PlayList>
 
 }

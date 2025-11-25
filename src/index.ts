@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import cors from "cors";
 import { connectToDB } from "./model";
 import { router as playlistRouter} from "./route/playlist.router";
 import { router as videoRouter } from "./route/video.router";
@@ -10,6 +11,8 @@ const PORT = Number(process.env.PORT || 3000)
 
 // Add body parsing middleware
 app.use(express.json())
+// Allow all CORS
+app.use(cors()); // 👈 This enables Access-Control-Allow-Origin: *
 app.use(express.urlencoded({ extended: true }))
 app.use("/playlist",playlistRouter);
 app.use("/videos",videoRouter);
