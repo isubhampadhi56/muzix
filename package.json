@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jasmine",
-    "test:watch": "jasmine --watch",
+    "test": "dotenv -e test.env jasmine",
+    "test:watch": "dotenv -e test.env jasmine --watch",
     "start": "ts-node src/index.ts",
-    "dev": "ts-node src/index.ts"
+    "dev": "dotenv -e .env ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +22,7 @@
     "cross-spawn": "^7.0.6",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "jittered-fractional-indexing": "^1.0.0",
     "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
@@ -36,6 +37,7 @@
     "@types/jasmine": "^5.1.13",
     "@types/node": "^24.10.1",
     "@types/supertest": "^6.0.3",
+    "dotenv-cli": "^11.0.0",
     "jasmine": "^5.12.0",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",

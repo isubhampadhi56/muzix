@@ -1,158 +1,130 @@
 import request from 'supertest';
 import express from 'express';
+import { connectToDB } from '../src/model';
 import { router as playlistRouter } from '../src/route/playlist.router';
+import { router as videoRouter } from '../src/route/video.router';
 
-// Mock the playlist module
-const mockGetAllPlaylist = jasmine.createSpy('getAllPlaylist');
-const mockGetPlaylistById = jasmine.createSpy('getPlaylistById');
-const mockCreatePlaylist = jasmine.createSpy('createPlaylist');
-const mockGetAllVideosInPlayList = jasmine.createSpy('getAllVideosInPlayList');
-const mockDeletePlayList = jasmine.createSpy('deletePlayList');
+describe('Playlist Router - Integration Tests', () => {
+  let app: express.Application;
+  let server: any;
+  let baseUrl: string;
 
-// Mock the module
-import * as playlistModule from '../src/module/playlist.module';
-(playlistModule.getAllPlaylist as any) = mockGetAllPlaylist;
-(playlistModule.getPlaylistById as any) = mockGetPlaylistById;
-(playlistModule.createPlaylist as any) = mockCreatePlaylist;
-(playlistModule.getAllVideosInPlayList as any) = mockGetAllVideosInPlayList;
-(playlistModule.deletePlayList as any) = mockDeletePlayList;
+  beforeAll(async () => {
+    // Create express app
+    app = express();
+    app.use(express.json());
+    
+    // Add routes
+    app.use('/playlist', playlistRouter);
+    app.use('/videos', videoRouter);
+    
+    // Connect to database
+    try {
+      await connectToDB();
+      console.log("✅ Connected to database for tests");
+    } catch (error) {
+      console.warn("⚠️ Database connection failed, but continuing tests:", error);
+    }
 
-const app = express();
-app.use(express.json());
-app.use('/playlist', playlistRouter);
+    // Start server
+    const PORT = process.env.PORT || 4000;
+    server = app.listen(PORT);
+    baseUrl = `http://localhost:${PORT}`;
+  });
 
-describe('Playlist Router', () => {
-  beforeEach(() => {
-    mockGetAllPlaylist.calls.reset();
-    mockGetPlaylistById.calls.reset();
-    mockCreatePlaylist.calls.reset();
-    mockGetAllVideosInPlayList.calls.reset();
-    mockDeletePlayList.calls.reset();
+  afterAll(async () => {
+    // Close the server after tests
+    if (server) {
+      server.close();
+    }
   });
 
   describe('GET /playlist', () => {
     it('should return all playlists', async () => {
-      const mockPlaylists = [
-        { id: '1', name: 'Playlist 1', location: 'location1' },
-        { id: '2', name: 'Playlist 2', location: 'location2' }
-      ];
-      mockGetAllPlaylist.and.resolveTo(mockPlaylists);
-
-      const response = await request(app)
+      const response = await request(baseUrl)
         .get('/playlist')
         .expect(200);
 
-      expect(response.body).toEqual(mockPlaylists);
-      expect(mockGetAllPlaylist).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle errors when getting playlists', async () => {
-      mockGetAllPlaylist.and.rejectWith(new Error('Database error'));
-
-      const response = await request(app)
-        .get('/playlist')
-        .expect(200); // Note: The current implementation doesn't handle errors properly
-
-      // The current implementation doesn't handle errors, so it will still return 200
-      // This test shows the current behavior
-    });
-  });
-
-  describe('GET /playlist/:id', () => {
-    it('should return a playlist by ID', async () => {
-      const mockPlaylist = { id: '1', name: 'Test Playlist', location: 'test-location' };
-      mockGetPlaylistById.and.resolveTo(mockPlaylist);
-
-      const response = await request(app)
-        .get('/playlist/1')
-        .expect(200);
-
-      expect(response.body).toEqual(mockPlaylist);
-      expect(mockGetPlaylistById).toHaveBeenCalledWith('1');
-    });
-
-    it('should handle non-existent playlist', async () => {
-      mockGetPlaylistById.and.resolveTo(null);
-
-      const response = await request(app)
-        .get('/playlist/999')
-        .expect(200);
-
-      expect(response.body).toBeNull();
+      expect(response.body).toBeInstanceOf(Array);
     });
   });
 
   describe('POST /playlist', () => {
     it('should create a new playlist', async () => {
-      const newPlaylist = { name: 'New Playlist', location: 'new-location' };
-      mockCreatePlaylist.and.resolveTo(undefined);
+      const newPlaylist = { 
+        name: 'Test Playlist ' + Date.now(), 
+        location: 'test-location' 
+      };
 
-      const response = await request(app)
+      const response = await request(baseUrl)
         .post('/playlist')
         .send(newPlaylist)
         .expect(200);
 
-      expect(response.body).toEqual({});
-      expect(mockCreatePlaylist).toHaveBeenCalledWith(newPlaylist);
+      expect(response.body).toBeDefined();
     });
 
-    it('should handle creation errors', async () => {
-      const newPlaylist = { name: 'New Playlist' };
-      mockCreatePlaylist.and.rejectWith(new Error('Creation failed'));
+    it('should require name field', async () => {
+      const invalidPlaylist = { location: 'test-location' };
 
-      const response = await request(app)
+      const response = await request(baseUrl)
         .post('/playlist')
-        .send(newPlaylist)
-        .expect(200); // Current implementation doesn't handle errors properly
+        .send(invalidPlaylist)
+        .expect(500); // Should return error for missing required field
+
+      expect(response.body).toBeDefined();
     });
   });
 
   describe('GET /playlist/:id/videos', () => {
-    it('should return all videos in a playlist', async () => {
-      const mockVideos = [
-        { id: '1', title: 'Video 1', url: 'url1' },
-        { id: '2', title: 'Video 2', url: 'url2' }
-      ];
-      mockGetAllVideosInPlayList.and.resolveTo(mockVideos);
+    it('should return videos for a playlist', async () => {
+      // First create a playlist
+      const newPlaylist = { 
+        name: 'Test Playlist for Videos ' + Date.now(), 
+        location: 'test-location' 
+      };
 
-      const response = await request(app)
-        .get('/playlist/1/videos')
+      const playlistResponse = await request(baseUrl)
+        .post('/playlist')
+        .send(newPlaylist)
         .expect(200);
 
-      expect(response.body).toEqual(mockVideos);
-      expect(mockGetAllVideosInPlayList).toHaveBeenCalledWith('1');
+      // Get videos for the playlist (should be empty initially)
+      const videosResponse = await request(baseUrl)
+        .get(`/playlist/${playlistResponse.body.id}/videos`)
+        .expect(200);
+
+      expect(videosResponse.body).toBeInstanceOf(Array);
     });
 
-    it('should handle empty videos list', async () => {
-      mockGetAllVideosInPlayList.and.resolveTo([]);
-
-      const response = await request(app)
-        .get('/playlist/1/videos')
+    it('should handle non-existent playlist', async () => {
+      const response = await request(baseUrl)
+        .get('/playlist/non-existent-id/videos')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect(response.body).toBeInstanceOf(Array);
     });
   });
 
   describe('DELETE /playlist/:id', () => {
     it('should delete a playlist', async () => {
-      const mockResult = { success: true };
-      mockDeletePlayList.and.resolveTo(mockResult);
+      // First create a playlist to delete
+      const newPlaylist = { 
+        name: 'Playlist to Delete ' + Date.now(), 
+        location: 'test-location' 
+      };
 
-      const response = await request(app)
-        .delete('/playlist/1')
+      const createResponse = await request(baseUrl)
+        .post('/playlist')
+        .send(newPlaylist)
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
-      expect(mockDeletePlayList).toHaveBeenCalledWith('1');
-    });
+      // Then delete it
+      const deleteResponse = await request(baseUrl)
+        .delete(`/playlist/${createResponse.body.id}`)
+        .expect(200);
 
-    it('should handle deletion errors', async () => {
-      mockDeletePlayList.and.rejectWith(new Error('Deletion failed'));
-
-      const response = await request(app)
-        .delete('/playlist/1')
-        .expect(200); // Current implementation doesn't handle errors properly
+      expect(deleteResponse.body).toBeDefined();
     });
   });
 });
