@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { connectToDB } from '../src/model';
+import { connectToDB, clearDB } from '../src/model';
 import { router as playlistRouter } from '../src/route/playlist.router';
 import { router as videoRouter } from '../src/route/video.router';
 
@@ -22,6 +22,9 @@ describe('Playlist Router - Integration Tests', () => {
     try {
       await connectToDB();
       console.log("✅ Connected to database for tests");
+      
+      // Clear database after connection is established
+      await clearDB();
     } catch (error) {
       console.warn("⚠️ Database connection failed, but continuing tests:", error);
     }
