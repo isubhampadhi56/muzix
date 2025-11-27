@@ -44,7 +44,7 @@ const getVideoById = async(videoId:string) => {
         }
     })
     if(currVideo){
-        const {audio,video} = await (await YoutubeService.getInstance()).getStreamUrl(currVideo.url);
+        const {audio,video} = await (YoutubeService.getInstance()).getStreamUrl(currVideo.url);
         return{
             ...currVideo,
             audio,
@@ -58,9 +58,11 @@ const addVideo = async(reqBody:any) =>{
     const prevRank = reqData?.prevRank || null;
     const nextRank = reqBody?.nextRank || null;
     const midRank = generateKeyBetween(prevRank,nextRank)
+    const {name,thumbnailUrl} = await (YoutubeService.getInstance()).getVideoMetaData(reqData.url)
     const video = await videoRepo.create({
         id: uuidv4(),
         url: reqData.url,
+        name: name,
         playlist:{
             id:reqData.playlistId     
         },

@@ -1,6 +1,7 @@
 import { spawn } from 'cross-spawn';
 import path from 'path';
 import fs from "fs";
+import axios from 'axios';
 class YoutubeService {
     private static instance: YoutubeService;
     private initializationPromise: Promise<void> | null = null;
@@ -19,14 +20,9 @@ class YoutubeService {
         console.log('YouTube service initialized successfully');
     }
 
-    static async getInstance(): Promise<YoutubeService> {
+    static getInstance(): YoutubeService {
         if (!YoutubeService.instance) {
             YoutubeService.instance = new YoutubeService();
-        }
-        
-        // Wait for initialization to complete
-        if (YoutubeService.instance.initializationPromise) {
-            await YoutubeService.instance.initializationPromise;
         }
         
         return YoutubeService.instance;
@@ -78,7 +74,15 @@ class YoutubeService {
             });
         });
     }
-    
+    async getVideoMetaData(videoUrl:string){
+        const reqUrl = `https://www.youtube.com/oembed?url=${videoUrl}&format=json`
+        const {status,data} = await axios.get(reqUrl);
+        return {
+            name: (data as any)?.title,
+            thumbnailUrl: (data as any)?.thumbnail_url,
+        }
+    }
 }
+    
 
 export default YoutubeService;
