@@ -39,6 +39,9 @@ const getAllVideosInPlayList = async (playlistId:string) =>{
             playlist:{
                 id:playlistId
             }
+        },
+        order:{
+            rank: "ASC"
         }
     })
     return videos;

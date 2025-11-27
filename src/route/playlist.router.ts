@@ -81,8 +81,8 @@ router.get("/:id",async (req:Request,res: Response,next:NextFunction)=>{
  *               $ref: '#/components/schemas/Playlist'
  */
 router.post("/",async(req:Request,res: Response,next:NextFunction)=>{
-    await createPlaylist(req.body as any);
-    res.json({});
+    const playlist = await createPlaylist(req.body as any);
+    res.json(playlist);
 })
 /**
  * @swagger

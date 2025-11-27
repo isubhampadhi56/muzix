@@ -23,6 +23,9 @@ export class Video {
 
   @Column({type: "varchar", nullable: false})
   playlistId!: string
+
+  @Column({type: "varchar",nullable:true})
+  rank?: string
   
   @ManyToOne(() => PlayList, (playlist) => playlist.videos)
   @JoinColumn({name: "playlistId"})

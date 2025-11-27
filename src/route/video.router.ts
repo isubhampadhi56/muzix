@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addVideo, deleteVideo, getAllVideo, getVideoById } from "../module/video.module";
+import { addVideo, deleteVideo, getAllVideo, getVideoById, moveVideo } from "../module/video.module";
 export const router = Router();
 
 /**
@@ -68,7 +68,7 @@ router.get("/:id",async (req,res,next)=>{
  * /videos:
  *   post:
  *     summary: Add a new video
- *     description: Add a new YouTube video to the system
+ *     description: Add a new YouTube video to the system with fractional indexing for ordering
  *     tags: [Videos]
  *     requestBody:
  *       required: true
@@ -86,6 +86,14 @@ router.get("/:id",async (req,res,next)=>{
  *               playlistId:
  *                  type: string
  *                  description: PlaylistId of Playlist
+ *               prevRank:
+ *                 type: string
+ *                 description: Rank of the previous video (for inserting between videos)
+ *                 nullable: true
+ *               nextRank:
+ *                 type: string
+ *                 description: Rank of the next video (for inserting between videos)
+ *                 nullable: true
  *     responses:
  *       200:
  *         description: Video added successfully
@@ -111,6 +119,56 @@ router.post("/",async (req,res,next)=>{
  */
 router.put("/",(req,res,next)=>{
 
+})
+
+/**
+ * @swagger
+ * /videos/move:
+ *   patch:
+ *     summary: Move a video to a new position in playlist
+ *     description: Move a video to a new position using fractional indexing for ordering
+ *     tags: [Videos]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - videoId
+ *               - playlistId
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *                 description: ID of the video to move
+ *               playlistId:
+ *                 type: string
+ *                 description: Playlist ID that contains the video
+ *               prevRank:
+ *                 type: string
+ *                 description: Rank of the previous video (for inserting between videos)
+ *                 nullable: true
+ *               nextRank:
+ *                 type: string
+ *                 description: Rank of the next video (for inserting between videos)
+ *                 nullable: true
+ *     responses:
+ *       200:
+ *         description: Video moved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       404:
+ *         description: Video not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch("/move",async (req,res,next)=>{
+    const video = await moveVideo(req.body);
+    res.json(video);
 })
 
 /**
